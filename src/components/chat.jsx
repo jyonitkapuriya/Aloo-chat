@@ -1,6 +1,6 @@
 import { useFirebase } from "@/firebase/firebase"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Loader from "./loader"
 import { createChat, createConversation, getUserChat, listenChat } from "@/firebase/auth"
 
@@ -10,7 +10,9 @@ const Chat = () => {
     const [selectedUser, setSelectedUser] = useState(null)
     const [chatHistory, setChatHistory] = useState([])
     const [chatLoader, setChatLoader] = useState(true)
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [chatId, setChatId] = useState(null)
+    const endOfMessagesRef = useRef(null);
     const router = useRouter()
 
     const getChatId = async (receiver) => {
@@ -27,8 +29,14 @@ const Chat = () => {
             return null;
         }
     };
+    const scrollToBottom = () => {
+        endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
-    console.log(chatId, "chatId")
+    useEffect(() => {
+        // Scroll to the bottom whenever chatHistory changes
+        scrollToBottom();
+    }, [chatHistory]);
     useEffect(() => {
         if (!allUsers?.length || selectedUser?.id) return
         setSelectedUser(allUsers[0])
@@ -93,8 +101,8 @@ const Chat = () => {
     return (
 
         <div className="flex h-screen antialiased text-gray-800 w-full">
-            <div className="flex flex-row h-full w-full overflow-x-hidden">
-                <div className="flex flex-col py-8 pl-6 pr-2 w-64 bg-white flex-shrink-0">
+            <div className="md:flex md:flex-row  md:h-full  w-full overflow-x-hidden">
+                <div className="md:flex  hidden flex-col py-8 pl-6 pr-2 md:w-64 bg-white flex-shrink-0">
                     <div className="flex flex-row items-center justify-center h-12 w-full">
                         <div
                             className="flex items-center justify-center rounded-2xl text-indigo-700 bg-indigo-100 h-10 w-10"
@@ -183,6 +191,99 @@ const Chat = () => {
                                 className="h-8 w-8 rounded-full"
                             />
                             <div className="ml-2 text-sm font-semibold">{selectedUser?.userName}</div>
+                            <div className="flex flex-col gap-1 ml-auto" onClick={() => setIsDrawerOpen(true)}>
+                                <div className="w-4 h-[1px] bg-black"></div>
+                                <div className="w-4 h-[1px] bg-black"></div>
+                                <div className="w-4 h-[1px] bg-black"></div>
+                            </div>
+                            <div
+                                className={`fixed inset-0 bg-gray-800 bg-opacity-50 transition-opacity duration-300 ${isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                onClick={() => setIsDrawerOpen(false)}
+                            >
+                                <div
+                                    className={`fixed top-0 w-full h-56 bg-white shadow-lg transition-transform duration-300 ${isDrawerOpen ? 'translate-y-0' : '-translate-y-full'}`}
+                                // style={{ width: '250px' }}
+                                >
+                                    <div className="md:flex   flex-col py-8 pl-6 pr-2 md:w-64 bg-white flex-shrink-0">
+                                        <div className="flex flex-row items-center justify-center h-12 w-full">
+                                            <div
+                                                className="flex items-center justify-center rounded-2xl text-indigo-700 bg-indigo-100 h-10 w-10"
+                                            >
+                                                <svg
+                                                    className="w-6 h-6"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                                    ></path>
+                                                </svg>
+                                            </div>
+                                            <div className="ml-2 font-bold text-2xl">Aloo chat</div>
+                                        </div>
+                                        <div
+                                            className="flex flex-col items-center bg-indigo-100 border border-gray-200 mt-4 w-full py-6 px-4 rounded-lg"
+                                        >
+                                            {!loading ? <div>
+                                                <div className="h-20 w-20 rounded-full border overflow-hidden">
+                                                    <img
+                                                        src={user?.photoUrl}
+                                                        alt="Avatar"
+                                                        className="h-full w-full"
+                                                    />
+                                                </div>
+                                                <div className="text-sm font-semibold mt-2">{user?.userName}</div>
+                                            </div> : <Loader />}
+                                            {/* <div className="text-xs text-gray-500">Lead UI/UX Designer</div> */}
+                                            <div className="flex flex-row items-center mt-3">
+                                                <div
+                                                    className="flex flex-col justify-center h-4 w-8 bg-indigo-500 rounded-full"
+                                                >
+                                                    <div className="h-3 w-3 bg-white rounded-full self-end mr-1"></div>
+                                                </div>
+                                                <div className="leading-none ml-1 text-xs">Active</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col mt-8">
+                                            <div className="flex flex-row items-center justify-between text-xs">
+                                                <span className="font-bold">Active Conversations</span>
+                                                <span
+                                                    className="flex items-center justify-center bg-gray-300 h-4 w-4 rounded-full"
+                                                >4</span
+                                                >
+                                            </div>
+                                            <div className="flex flex-col space-y-1 mt-4 -mx-2 h-48 overflow-y-auto">
+                                                {usersLoader ? <div className="h-full w-full flex items-center justify-center"> <Loader /></div> : allUsers?.map((item, index) => {
+                                                    return (
+                                                        <button
+                                                            className="flex flex-row items-center hover:bg-gray-100 rounded-xl p-2"
+                                                            onClick={async () => {
+                                                                setSelectedUser(item)
+                                                                setChatLoader(true)
+                                                                const ChatId = await getChatId(item)
+                                                                console.log(ChatId, "ChatId")
+                                                                setChatId(ChatId)
+                                                            }}
+                                                        >
+                                                            <img
+                                                                src={item?.photoUrl}
+                                                                alt="Avatar"
+                                                                className="h-8 w-8 rounded-full object-cover"
+                                                            />
+                                                            <div className="ml-2 text-sm font-semibold">{item?.userName}</div>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </button> : <div className="m-4 flex "><Loader /></div>}
                     </div>
                     <div
@@ -303,9 +404,10 @@ const Chat = () => {
                                         </div>
                                     </div>
                                 </div> */}
+                                        <div ref={endOfMessagesRef} />
+
                                     </div>
                                 }
-
                             </div>
                         </div>
                         <div
