@@ -63,6 +63,7 @@ export const createConversation = async (chatId, senderId, reciverId, message) =
 }
 
 export const getUserChat = async (callback, user1ID, user1Email, user2ID, user2Email) => {
+    console.log(user1ID, user1Email, user2ID, user2Email)
     const doc = collection(db, "chats")
     // const docRef = ref(doc)
     const q = query(doc, where(user1ID, "==", user1Email), where(user2ID, "==", user2Email))

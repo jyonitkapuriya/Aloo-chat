@@ -23,7 +23,6 @@ export const analytics = app.name && typeof window !== 'undefined' ? getAnalytic
 export const auth = getAuth(app);
 export const useAuth = getAuth;
 export const db = getFirestore(app);
-
 // export const storage = getStorage;
 // const Firestore = getFirestore();
 

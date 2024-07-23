@@ -17,8 +17,10 @@ const Chat = () => {
 
     const getChatId = async (receiver) => {
         if (!user?.id) return null;
+        console.log(receiver, "receiver")
         try {
             const chat = await getUserChat((item) => {
+                console.log(item, "item")
                 setChatId(item?.chatId ? item?.chatId : null)
             },
                 user.id, user.email, receiver.id, receiver.email);
@@ -52,6 +54,7 @@ const Chat = () => {
     const submit = async (e) => {
         e.preventDefault()
         if (inputValue === "") return
+        setInputValue("")
         if (!chatId) {
             const chat = await createChat({
                 [user?.id]: user?.email,
@@ -61,11 +64,10 @@ const Chat = () => {
             const sendMessage = await createConversation(chat.chatId, user?.id, selectedUser?.id, {
                 type: "text", value: inputValue
             })
-            listenChat((chats) => {
-                setChatHistory(chats)
-                // setChatLoader(false)
-            }, chat?.chatId);
-            setInputValue("")
+            // listenChat((chats) => {
+            //     setChatHistory(chats)
+            //     // setChatLoader(false)
+            // }, chat?.chatId);
         } else {
             const sendMessage = await createConversation(chatId, user?.id, selectedUser?.id, {
                 type: "text", value: inputValue
@@ -78,26 +80,23 @@ const Chat = () => {
         const getChatHistory = async () => {
             if (!user?.id || !selectedUser?.id) return;
             setChatLoader(true);
-            // const chat = await getChatId(selectedUser);
             if (!chatId) {
                 setChatHistory([]);
                 setChatLoader(false);
                 return;
             }
             const unsubscribe = listenChat((chats) => {
+                console.log(chats, "this is chats")
                 setChatHistory(chats);
                 setChatLoader(false);
             }, chatId);
 
-            return () => {
-                setChatHistory([]);
-                setChatLoader(false);
-            };
+            return () => unsubscribe();
         };
 
         getChatHistory();
-    }, [user, selectedUser, chatId]);
-
+    }, [chatId]);
+    console.log(chatHistory, "this is chat id")
     return (
 
         <div className="flex h-screen antialiased text-gray-800 w-full">
@@ -163,9 +162,9 @@ const Chat = () => {
                                         onClick={async () => {
                                             setSelectedUser(item)
                                             setChatLoader(true)
-                                            const ChatId = await getChatId(item)
-                                            console.log(ChatId, "ChatId")
-                                            setChatId(ChatId)
+                                            await getChatId(item)
+                                            setChatLoader(false)
+                                            // setChatId(ChatId)
                                         }}
                                     >
                                         <img
@@ -265,9 +264,8 @@ const Chat = () => {
                                                             onClick={async () => {
                                                                 setSelectedUser(item)
                                                                 setChatLoader(true)
-                                                                const ChatId = await getChatId(item)
-                                                                console.log(ChatId, "ChatId")
-                                                                setChatId(ChatId)
+                                                                await getChatId(item)
+                                                                setChatLoader(false)
                                                             }}
                                                         >
                                                             <img
@@ -329,8 +327,6 @@ const Chat = () => {
                                                     </div>
                                                 </div>)
                                             )
-
-
                                         })}
                                         {/* <div className="col-start-1 col-end-8 p-3 rounded-lg">
                                     <div className="flex flex-row items-center">
@@ -433,8 +429,8 @@ const Chat = () => {
                                     </svg>
                                 </button>
                             </div>
-                            <div className="flex-grow ml-4">
-                                <form className="relative w-full" onSubmit={submit}>
+                            <form className="relative w-full flex items-center" onSubmit={submit}>
+                                <div className="flex-grow ml-4">
                                     <input
                                         type="text"
                                         className="flex w-full border rounded-xl focus:outline-none focus:border-indigo-300 pl-4 h-10"
@@ -444,6 +440,7 @@ const Chat = () => {
                                     <button
                                         className="absolute flex items-center justify-center h-full w-12 right-0 top-0 text-gray-400 hover:text-gray-600"
                                         type="submit"
+                                        onClick={submit}
                                     >
                                         <svg
                                             className="w-6 h-6"
@@ -460,31 +457,31 @@ const Chat = () => {
                                             ></path>
                                         </svg>
                                     </button>
-                                </form>
-                            </div>
-                            <div className="ml-4">
-                                <button
-                                    className="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-1 flex-shrink-0"
-                                >
-                                    <span>Send</span>
-                                    <span className="ml-2">
-                                        <svg
-                                            className="w-4 h-4 transform rotate-45 -mt-px"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                                            ></path>
-                                        </svg>
-                                    </span>
-                                </button>
-                            </div>
+                                </div>
+                                <div className="ml-4">
+                                    <button
+                                        className="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 rounded-xl text-white px-4 py-1 flex-shrink-0"
+                                    >
+                                        <span>Send</span>
+                                        <span className="ml-2">
+                                            <svg
+                                                className="w-4 h-4 transform rotate-45 -mt-px"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                                                ></path>
+                                            </svg>
+                                        </span>
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
